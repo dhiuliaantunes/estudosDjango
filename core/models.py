@@ -1,10 +1,9 @@
-from pyexpat import model
-from tabnanny import verbose
-from tkinter import CASCADE
-from unicodedata import category
+
 
 from django.db import models
+from django.db.models import F
 from django.contrib.auth.models import User
+
 
 # Create your models here.
 
@@ -55,8 +54,15 @@ class Compra(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name="compras")
     status = models.IntegerField(choices=StatusCompra.choices, default=StatusCompra.CARRINHO)
 
-    def __str__(self): 
-        return "%s (%s)" %(self.usuario, self.status)
+   # def __str__(self): 
+    #    return "%s (%s)" %(self.usuario, self.status)
+
+    @property
+    def total(self):
+        queryset = self.itens.all().aggregate(
+            total=models.Sum(F('quantidade') * F('livro__preco'))
+        )
+        return queryset["total"]
 
 class ItensCompra(models.Model):
     compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name="itens")
